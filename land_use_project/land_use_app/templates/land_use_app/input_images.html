@@ -13,9 +13,14 @@
         <button type="submit">Analyze</button>
     </form>
 
+    {% if change_percent %}
+        <p><strong>Change Detected:</strong> {{ change_percent }}% of the area</p>
+    {% endif %}
+
     {% if change_map %}
         <h2>Detected Change Areas</h2>
         <img src="data:image/png;base64,{{ change_map|b64encode }}">
     {% endif %}
+
 </body>
 </html>

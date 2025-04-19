@@ -1,4 +1,4 @@
-{% load encode %} {# Assumes you have a custom template tag filter named 'b64encode' in a 'templatetags/encode.py' file #}
+{% load encode %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -15,7 +15,11 @@
             border-bottom: 1px solid #eee;
             padding-bottom: 5px;
             margin-bottom: 15px;
+            margin-top: 20px; /* Add some space above headers */
         }
+         h1:first-child { /* No top margin for the first H1 */
+             margin-top: 0;
+         }
         form {
             margin-bottom: 40px;
             padding: 20px;
@@ -23,17 +27,24 @@
             background-color: #fff;
             border-radius: 5px;
         }
+         form p { /* Style for form fields rendered as <p> */
+             margin-bottom: 15px;
+         }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid red;
+            background-color: #ffebeb;
+            border-radius: 4px;
+        }
         .results {
             margin-top: 30px;
             padding: 20px;
             border: 1px solid #ddd;
             background-color: #fff;
             border-radius: 5px;
-        }
-        .error-message {
-            color: red;
-            font-weight: bold;
-            margin-bottom: 20px;
         }
         .legend-color {
             display: inline-block;
@@ -75,12 +86,23 @@
              border-radius: 4px;
              cursor: pointer;
              font-size: 1em;
+             margin-right: 10px; /* Space between buttons */
          }
          button:hover {
              background-color: #0056b3;
          }
+         button:last-child { /* No margin on the last button */
+             margin-right: 0;
+         }
          input[type="file"] {
              margin-bottom: 10px;
+             display: block; /* Ensure file inputs are on new lines */
+         }
+         /* Style for labels rendered by form.as_p */
+         form p label {
+             display: inline-block;
+             margin-bottom: 5px;
+             font-weight: bold;
          }
     </style>
 </head>
@@ -96,66 +118,99 @@
         {% csrf_token %}
         {# Display form fields and any field-specific errors #}
         {{ form.as_p }}
-        <button type="submit">Analyze Images</button>
+        {# Add buttons with name="analysis_type" and distinct values #}
+        <button type="submit" name="analysis_type" value="basic">Perform Basic Analysis</button>
+        <button type="submit" name="analysis_type" value="advanced">Perform Advanced Analysis</button>
     </form>
 
     {# Display Analysis Results Section #}
-    {# Check if any result data is available in the context before showing the results section #}
-    {% if change_percent is not None or change_summary or change_map or simplified_legend_items %}
+    {# This section only shows if an analysis type was performed (i.e., after a POST request) #}
+    {% if analysis_type_performed %}
     <div class="results">
-        <h2>Analysis Results</h2>
-
-        {% if change_percent is not None %} {# Check specifically for None, as 0% is possible #}
-            <p><strong>Total Area with Simplified Category Change:</strong> {{ change_percent }}%</p>
-        {% endif %}
-
-        {% if change_summary %}
-            <h3>Change Breakdown by Transition Type</h3>
-            <p style="font-size: 0.9em; color: #555;">
-                Percentage of total image area that transitioned from one simplified category to another.
-            </p>
-            <ul>
-                 {# Loop through the calculated specific transitions (e.g., "Vegetation -> Buildings") #}
-                {% for transition, percent in change_summary.items %}
-                    <li>
-                        <strong>{{ transition|capfirst }}:</strong> {{ percent }}%
-                    </li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-
-        {# Legend explaining the colors used on the change map visualization #}
-        {% if simplified_legend_items %}
-            <h3>Change Map Color Legend</h3>
-             <p style="font-size: 0.9em; color: #555;">
-                Highlighted areas indicate a change occurred, colored by the resulting simplified category (in the second image).
-            </p>
-            <ul>
-                {# Loop through the legend items prepared in the view #}
-                {% for item in simplified_legend_items %}
-                     {# We only add color swatches for categories that have a defined simplified ID and color #}
-                     {# The "Other" category (ID 0) will likely always be in simplified_legend_items #}
-                    <li>
-                        <span class="legend-color" style="background-color: {{ item.color }};"></span>
-                        {{ item.name }}
-                    </li>
-                {% endfor %}
-                 {# Add a legend item for the areas that did NOT change #}
-                 <li><span class="legend-color no-change"></span> Areas with no significant simplified category change (original colors retained).</li>
-            </ul>
+        {# Display header indicating which analysis was performed #}
+        {% if analysis_type_performed == 'basic' %}
+            <h2>Basic Analysis Results (Segmentation Change Detection)</h2>
+        {% elif analysis_type_performed == 'advanced' %}
+            <h2>Advanced Analysis Results</h2>
         {% endif %}
 
 
-        {% if change_map %}
-            <h3>Change Map Visualization</h3>
-            {# Display the change map image using base64 data URI #}
-            {# Assumes 'change_map' in context is byte data and 'b64encode' filter converts bytes to base64 string #}
-            {# Make sure your 'encode' template tag is correctly installed and loaded #}
-            <img src="data:image/png;base64,{{ change_map|b64encode }}" alt="Change Map - Highlighted Differences">
+        {# --- Display Advanced Analysis Results --- #}
+        {% if analysis_type_performed == 'advanced' %}
+
+            {% if change_percent is not None %} {# Check specifically for None, as 0% is possible #}
+                <p><strong>Total Area with Simplified Category Change:</strong> {{ change_percent }}%</p>
+            {% endif %}
+
+            {% if change_summary %}
+                <h3>Change Breakdown by Transition Type</h3>
+                <p style="font-size: 0.9em; color: #555;">
+                    Percentage of total image area that transitioned from one simplified category to another.
+                </p>
+                <ul>
+                     {# Loop through the calculated specific transitions (e.g., "Vegetation -> Buildings") #}
+                    {% for transition, percent in change_summary.items %}
+                        <li>
+                            <strong>{{ transition|capfirst }}:</strong> {{ percent }}%
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {# Legend explaining the colors used on the change map visualization #}
+            {% if simplified_legend_items %}
+                <h3>Change Map Color Legend</h3>
+                 <p style="font-size: 0.9em; color: #555;">
+                    Highlighted areas indicate a change occurred, colored by the resulting simplified category (in the second image).
+                </p>
+                <ul>
+                    {# Loop through the legend items prepared in the view #}
+                    {% for item in simplified_legend_items %}
+                         {# We only add color swatches for categories that have a defined simplified ID and color #}
+                         {# The "Other" category (ID 0) will likely always be in simplified_legend_items #}
+                        <li>
+                            <span class="legend-color" style="background-color: {{ item.color }};"></span>
+                            {{ item.name }}
+                        </li>
+                    {% endfor %}
+                     {# Add a legend item for the areas that did NOT change #}
+                     <li><span class="legend-color no-change"></span> Areas with no significant simplified category change (original colors retained).</li>
+                </ul>
+            {% endif %}
+
+
+            {% if change_map %}
+                <h3>Change Map Visualization</h3>
+                {# Display the change map image using base64 data URI #}
+                {# Assumes 'change_map' in context is byte data and 'b64encode' filter converts bytes to base64 string #}
+                {# Make sure your 'encode' template tag is correctly installed and loaded #}
+                <img src="data:image/png;base64,{{ change_map|b64encode }}" alt="Change Map - Highlighted Differences">
+            {% endif %}
+
+        {# --- Display Basic Analysis Results --- #}
+        {% elif analysis_type_performed == 'basic' %}
+
+            {# This is where you will display results specific to your advanced analysis #}
+            {# Access variables like {{ advanced_message }}, {{ average_pixel_difference }}, etc. #}
+
+            <p><strong>Analysis Type:</strong> Advanced</p>
+
+            {% if basic_message %}
+                <p>{{ basic_message }}</p>
+            {% endif %}
+
+            {% if average_pixel_difference is not None %}
+                <p><strong>Calculated Average Pixel Difference:</strong> {{ average_pixel_difference }}</p>
+            {% endif %}
+
+            {# Add conditional blocks here to display any basic analysis specific maps or data #}
+            {# Example: {% if advanced_map %} <img src="data:image/png;base64,{{ basic_map|b64encode }}" alt="Basic Map"> {% endif %} #}
+
         {% endif %}
+
 
     </div> {# End .results #}
-    {% endif %} {# End if any results exist #}
+    {% endif %} {# End if analysis_type_performed exists #}
 
 </body>
 </html>

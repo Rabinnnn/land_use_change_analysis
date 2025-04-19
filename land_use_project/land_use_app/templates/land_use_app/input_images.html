@@ -1,26 +1,110 @@
-{% load encode %}
+{% load encode %} {# Assumes you have a custom template tag filter named 'b64encode' in a 'templatetags/encode.py' file #}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Land Use Change Analysis</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            background-color: #f9f9f9;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            background-color: #fff;
+        }
+        .legend-color {
+            display: inline-block;
+            width: 14px; /* Slightly larger */
+            height: 14px; /* Slightly larger */
+            margin-right: 8px;
+            border: 1px solid #666; /* Stronger border */
+            vertical-align: middle; /* Align with text */
+        }
+        img {
+            max-width: 100%; /* Ensure image fits within container */
+            height: auto;
+            display: block; /* Prevent extra space below image */
+            margin-top: 15px;
+            border: 1px solid #ccc;
+            padding: 5px;
+            background-color: #fff;
+        }
+        ul {
+            list-style: none; /* Remove default list bullets */
+            padding: 0;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Upload Input Images</h1>
+    <h1>Land Use Change Analysis</h1>
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Analyze</button>
+        <button type="submit">Analyze Images</button>
     </form>
 
-    {% if change_percent %}
-        <p><strong>Change Detected:</strong> {{ change_percent }}% of the area</p>
-    {% endif %}
+    {# Display Results Section #}
+    {% if change_percent or change_summary or change_map %}
+    <div class="results">
+        <h2>Analysis Results</h2>
 
-    {% if change_map %}
-        <h2>Detected Change Areas</h2>
-        <img src="data:image/png;base64,{{ change_map|b64encode }}">
-    {% endif %}
+        {% if change_percent is not None %} {# Check specifically for None, as 0% is possible #}
+            <p><strong>Total Change Detected:</strong> {{ change_percent }}% of the area</p>
+        {% endif %}
+
+        {% if change_summary %}
+            <h3>Change Breakdown by Category</h3>
+            <ul>
+                {% for category, percent in change_summary.items %}
+                    <li>
+                        {# Note: The color logic here defines colors for the *legend items*,
+                           which represent the percentage breakdown of categories (likely final state or overall involvement),
+                           NOT necessarily the colors used to highlight changes on the 'change_map' image currently
+                           (which uses magenta in the Python code).
+                           You might need to update the Python visualization to match these colors
+                           if you want the map to correspond directly to this legend. #}
+                        <span class="legend-color"
+                              style="background-color:
+                              {% if category|lower == 'vegetation' %}green
+                              {% elif category|lower == 'buildings' %}yellow
+                              {% elif category|lower == 'water' %}blue
+                              {% elif category|lower == 'bare land' %}red {# Note: 'Bare Land' wasn't in your Python categories #}
+                              {% else %}gray{# Default color for categories not listed #}{% endif %};">
+                        </span>
+                        <strong>{{ category|capfirst }}:</strong> {{ percent }}%
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if change_map %}
+            <h3>Change Map Visualization</h3>
+            {# The change map image. Assumes 'change_map' in context is byte data #}
+            <img src="data:image/png;base64,{{ change_map|b64encode }}" alt="Change Map - Highlighted Differences">
+            <p style="font-size: 0.9em; color: #555;">
+                {# Clarify what the highlight means based on your Python code #}
+                <span class="legend-color" style="background-color: magenta;"></span> Highlighted areas indicate changes detected in the simplified land use categories.
+            </p>
+        {% endif %}
+
+    </div> {# End .results #}
+    {% endif %} {# End if any results exist #}
 
 </body>
 </html>

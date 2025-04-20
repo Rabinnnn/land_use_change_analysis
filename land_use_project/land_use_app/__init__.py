@@ -1,0 +1,1 @@
+default_app_config = 'land_use_app.apps.LandUseAppConfig'

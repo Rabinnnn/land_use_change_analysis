@@ -1,0 +1,182 @@
+/* land_use_app/static/land_use_app/css/style.css */
+
+:root { /* Define CSS variables for easier theme changes */
+    --primary-color: #007bff;
+    --primary-color-dark: #0056b3;
+    --secondary-color: #28a745; /* Example green */
+    --background-color: #f8f9fa; /* Light grey */
+    --surface-color: #fff; /* White */
+    --border-color: #dee2e6; /* Light grey border */
+    --text-color: #343a40; /* Dark grey */
+    --error-color: #dc3545; /* Red */
+    --error-bg-color: #f8d7da; /* Light red background */
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    /* --- Existing background color --- */
+    background-color: var(--background-color); /* Keep a background color in case the image doesn't load */
+    color: var(--text-color);
+    min-height: 100vh;
+    box-sizing: border-box;
+
+    /* --- Add Background Image Properties --- */
+    background-image: url('../images/bg1.avif'); /* Path relative to the CSS file */
+    background-size: cover; /* Cover the entire background area */
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Do not repeat the image */
+    background-attachment: fixed; /* Make the background fixed while content scrolls */
+    /* --- End Background Image Properties --- */
+}
+
+.container { /* Optional: Add a max-width container for larger screens */
+    max-width: 960px;
+    margin: 0 auto; /* Center the container */
+    padding: 0 15px; /* Add horizontal padding */
+}
+
+h1, h2, h3 {
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px; /* Slightly more padding */
+    margin-bottom: 20px; /* More space below headers */
+    margin-top: 30px; /* Add more space above headers */
+}
+
+h1:first-child {
+     margin-top: 0;
+}
+
+form {
+    margin-bottom: 40px;
+    padding: 30px; /* More padding */
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-color);
+    border-radius: 8px; /* More rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+ form p {
+     margin-bottom: 20px; /* More space between form fields */
+ }
+
+ /* Style for labels rendered by form.as_p */
+ form p label {
+     display: block; /* Make label block for better stacking with file input */
+     margin-bottom: 8px; /* Space between label and input */
+     font-weight: bold;
+     color: #555; /* Slightly lighter label color */
+ }
+
+ input[type="file"] {
+     display: block; /* Ensure file inputs are on new lines */
+     margin-bottom: 15px; /* Space below file input */
+     padding: 8px;
+     border: 1px solid var(--border-color);
+     border-radius: 4px;
+     background-color: var(--background-color); /* Light background for input */
+     width: calc(100% - 18px); /* Adjust width considering padding/border */
+     box-sizing: border-box; /* Include padding/border in width */
+ }
+
+.form-actions { /* Wrapper for buttons */
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+button {
+    padding: 12px 20px; /* More padding */
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 5px; /* More rounded corners */
+    cursor: pointer;
+    font-size: 1em;
+    margin-right: 15px; /* More space between buttons */
+    transition: background-color 0.2s ease-in-out; /* Smooth hover */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle button shadow */
+}
+
+button:hover {
+    background-color: var(--primary-color-dark);
+}
+button:active { /* Style for button when clicked */
+     background-color: #004085;
+     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+button:last-child {
+    margin-right: 0;
+}
+
+.error-message {
+    color: var(--error-color);
+    background-color: var(--error-bg-color);
+    border: 1px solid var(--error-color);
+    font-weight: bold;
+    margin-bottom: 25px; /* More space below error */
+    padding: 15px; /* More padding */
+    border-radius: 5px;
+}
+
+.results {
+    margin-top: 30px;
+    padding: 30px; /* More padding */
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-color);
+    border-radius: 8px; /* More rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.results p { /* Style for paragraphs in results */
+    margin-bottom: 15px;
+}
+
+.legend-color {
+    display: inline-block;
+    width: 20px; /* Larger swatches */
+    height: 20px; /* Larger swatches */
+    margin-right: 10px; /* More space */
+    border: 1px solid #666;
+    vertical-align: middle;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.2); /* Slightly larger shadow */
+    border-radius: 3px; /* Slightly rounded swatch corners */
+}
+
+.legend-color.no-change {
+     border: 1px dashed #999;
+     background-color: transparent;
+     box-shadow: none;
+}
+
+.legend ul {
+    padding: 0;
+    margin-top: 15px;
+}
+
+.legend li {
+    margin-bottom: 8px;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-top: 20px; /* More space above image */
+    border: 1px solid var(--border-color);
+    padding: 5px;
+    background-color: var(--background-color); /* Match background */
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle image shadow */
+}
+
+ footer { /* Simple footer */
+     margin-top: 40px;
+     text-align: center;
+     font-size: 0.9em;
+     color: #777;
+ }

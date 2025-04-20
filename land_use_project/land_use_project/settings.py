@@ -38,7 +38,56 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'land_use_app',
+
 ]
+
+# --- Logging Configuration ---
+# Basic configuration logging to the console
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False, # Keep default loggers
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {asctime} {name} {message}', # Include logger name
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple', # Use the simple format for console
+        },
+        # You could add handlers for file logging, Sentry, etc.
+        # 'file': {
+        #     'class': 'logging.FileHandler',
+        #     'filename': '/path/to/your/project/logs/django.log', # Define your log file path
+        #     'formatter': 'verbose',
+        # },
+    },
+    'root': {
+        'handlers': ['console'], # Log root level messages to console
+        'level': 'WARNING', # Default level for root logger
+    },
+    'loggers': {
+        # Configure loggers for your apps/modules
+        'your_app_name': { # Logger for your app
+            'handlers': ['console'], # Send app logs to console
+            'level': 'DEBUG', # Log DEBUG level messages and above for your app
+            'propagate': False, # Prevent logs from being sent to the root logger again
+        },
+        'transformers.modeling_utils': { # Suppress verbose logging from transformers
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # Add loggers for other apps/modules as needed
+    },
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -105,7 +154,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Nairobi'
 
 USE_I18N = True
 

@@ -266,7 +266,7 @@ def analyze_images(request):
         #     # Create a fresh, empty form
         #     form = ImageUploadForm()
         #     context = {'form': form}
-        #     return render(request, 'land_use_app/input_images.html', context)
+        #     return render(request, 'land_use_app/index.html', context)
         
         form = ImageUploadForm(request.POST, request.FILES)
        
@@ -305,7 +305,7 @@ def analyze_images(request):
                          context['error_message'] = "Advanced Analysis requires the Segformer model, which failed to load on the server. Please contact the administrator."
                          context['analysis_type_performed'] = 'advanced'
                          context['form'] = form 
-                         return render(request, 'land_use_app/input_images.html', context)
+                         return render(request, 'land_use_app/index.html', context)
 
                     analysis_results = _perform_segmentation_analysis(image1_cropped, image2_cropped)
                     context['analysis_type_performed'] = 'advanced'
@@ -314,7 +314,7 @@ def analyze_images(request):
                     logger.error(f"Invalid analysis type received: {analysis_type}")
                     context['error_message'] = "Invalid analysis type specified."
                     context['form'] = form
-                    return render(request, 'land_use_app/input_images.html', context) 
+                    return render(request, 'land_use_app/index.html', context) 
 
                 # Update the context with the results returned by the chosen analysis function
                 context.update(analysis_results)
@@ -330,4 +330,4 @@ def analyze_images(request):
         form = ImageUploadForm()
         context['form'] = form
 
-    return render(request, 'land_use_app/input_images.html', context)
+    return render(request, 'land_use_app/index.html', context)

@@ -92,6 +92,12 @@ Before running the project, ensure you have the following installed:
     * Click **"Perform Advanced Analysis"** for the segmentation change detection method.
 5.  The page will reload, displaying the results relevant to the analysis type you selected, including percentage change, a change map visualization, and additional details or legends depending on the analysis.
 
+## Recommendations
+
+* The type of input images you upload will determine the ouput. You should aim for high quality aerial images to get the best output. Keep in mind that they should be of the same place over a
+period of time. For images taken at very high altitudes, containing small-sized structures basic analysis performs better. For images containing relatively large objects that are easily distinguishable advanced analysis works best.
+Consider using the images in the sample_input_images directory. Upload the files in ascending order e.g image1 then image 2, to allow proper visualization of changes in the output.
+
 ## Analysis Details
 
 ### Basic Analysis (Pixel Difference)
@@ -127,12 +133,13 @@ The model is configured to load once per process upon application startup via `A
 ├─     land_use_app/              #  Django app directory
 │           ├── migrations/            # Stores database schema migrations (usually empty if no models used)
 │           │   └── __init__.py
+│           ├── static/                # contains static files like css, js e.t.c 
 │           ├── templatetags/          # Custom template tags directory
 │           │   ├── __init__.py        # Makes Python treat as a package
 │           │   └── encode.py          # custom b64encode filter
 │           ├── templates/             # App-specific templates directory
 │           │   └── land_use_app/      # Directory named after the app (standard practice)
-│           │       └── input_images.html  # HTML template
+│           │       └── index.html  # HTML template
 │           ├── __init__.py            # Points to AppConfig
 │           ├── admin.py               # Django admin configurations
 │           ├── apps.py                # custom AppConfig for model loading

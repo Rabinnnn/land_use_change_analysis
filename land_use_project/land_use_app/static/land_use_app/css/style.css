@@ -108,6 +108,14 @@ button {
     margin-right: 15px; /* Space between buttons */
     transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth transition for background and shadow */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle button shadow */
+    /* Add cursor change when disabled */
+    &:disabled {
+        opacity: 0.6; /* Make it slightly transparent */
+        cursor: not-allowed; /* Change cursor */
+        /* Optional: Add a pulsing background animation */
+        /* background-color: var(--primary-color-dark); */
+        /* animation: pulse 1.5s infinite ease-in-out; */
+    }
 }
 
 button:hover { /* Style when hovering over buttons */

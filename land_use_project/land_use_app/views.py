@@ -256,20 +256,24 @@ def _perform_segmentation_analysis(image1_cropped, image2_cropped):
 
 # --- Main Django View Function ---
 def analyze_images(request):
+   
     context = {}
 
     if request.method == 'POST':
-        if 'reset' in request.POST:
-            logger.info("Reset button clicked. Returning empty form.")
-            # Create a fresh, empty form
-            form = ImageUploadForm()
-            context = {'form': form}
-            return render(request, 'land_use_app/input_images.html', context) # Use your app name
+    
+        # if 'reset' in request.POST:
+        #     logger.info("Reset button clicked. Returning empty form.")
+        #     # Create a fresh, empty form
+        #     form = ImageUploadForm()
+        #     context = {'form': form}
+        #     return render(request, 'land_use_app/input_images.html', context)
         
         form = ImageUploadForm(request.POST, request.FILES)
-
+       
         analysis_type = request.POST.get('analysis_type')
         logger.info(f"Received POST request. Analysis type: {analysis_type}")
+        logger.debug(f"Value received for 'analysis_type': '{analysis_type}' (Type: {type(analysis_type)})") 
+
 
         if form.is_valid():
             try:

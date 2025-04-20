@@ -74,7 +74,7 @@ LOGGING = {
     },
     'loggers': {
         # Configure loggers for your apps/modules
-        'your_app_name': { # Logger for your app
+        'land_use_app': { # Logger for your app
             'handlers': ['console'], # Send app logs to console
             'level': 'DEBUG', # Log DEBUG level messages and above for your app
             'propagate': False, # Prevent logs from being sent to the root logger again

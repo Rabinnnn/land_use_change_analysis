@@ -124,21 +124,17 @@
     </form>
 
     {# Display Analysis Results Section #}
-    {# This section only shows if an analysis type was performed (i.e., after a POST request) #}
     {% if analysis_type_performed %}
     <div class="results">
-        {# Display header indicating which analysis was performed #}
         {% if analysis_type_performed == 'basic' %}
             <h2>Basic Analysis Results (Segmentation Change Detection)</h2>
         {% elif analysis_type_performed == 'advanced' %}
             <h2>Advanced Analysis Results</h2>
         {% endif %}
 
-
         {# --- Display Advanced Analysis Results --- #}
         {% if analysis_type_performed == 'advanced' %}
-
-            {% if change_percent is not None %} {# Check specifically for None, as 0% is possible #}
+            {% if change_percent is not None %}
                 <p><strong>Total Area with Simplified Category Change:</strong> {{ change_percent }}%</p>
             {% endif %}
 
@@ -157,44 +153,34 @@
                 </ul>
             {% endif %}
 
-            {# Legend explaining the colors used on the change map visualization #}
+            {# Legend explaining the colors used on the change-map visualization #}
             {% if simplified_legend_items %}
-                <h3>Change Map Color Legend</h3>
+                <h3>Change-Map Color Legend</h3>
                  <p style="font-size: 0.9em; color: #555;">
-                    Highlighted areas indicate a change occurred, colored by the resulting simplified category (in the second image).
+                    Highlighted areas in the map indicate a change occurred as colored by the resulting simplified category (in the second image).
+                    Areas with no significant changes retain the original colors.
                 </p>
                 <ul>
-                    {# Loop through the legend items prepared in the view #}
                     {% for item in simplified_legend_items %}
                          {# We only add color swatches for categories that have a defined simplified ID and color #}
                          {# The "Other" category (ID 0) will likely always be in simplified_legend_items #}
                         <li>
-                            <span class="legend-color" style="background-color: {{ item.color }};"></span>
+                            <span class="legend-color" style="background-color: {{ item.color }};"></span> {# ignore the warning - it's a false positive from the linter #}
                             {{ item.name }}
                         </li>
                     {% endfor %}
-                     {# Add a legend item for the areas that did NOT change #}
-                     <li><span class="legend-color no-change"></span> Areas with no significant simplified category change (original colors retained).</li>
                 </ul>
             {% endif %}
-
-
             {% if change_map %}
                 <h3>Change Map Visualization</h3>
                 {# Display the change map image using base64 data URI #}
                 {# Assumes 'change_map' in context is byte data and 'b64encode' filter converts bytes to base64 string #}
-                {# Make sure your 'encode' template tag is correctly installed and loaded #}
                 <img src="data:image/png;base64,{{ change_map|b64encode }}" alt="Change Map - Highlighted Differences">
             {% endif %}
 
         {# --- Display Basic Analysis Results --- #}
         {% elif analysis_type_performed == 'basic' %}
-
-            {# This is where you will display results specific to your advanced analysis #}
-            {# Access variables like {{ advanced_message }}, {{ average_pixel_difference }}, etc. #}
-
             <p><strong>Analysis Type:</strong> Advanced</p>
-
             {% if basic_message %}
                 <p>{{ basic_message }}</p>
             {% endif %}
@@ -203,8 +189,7 @@
                 <p><strong>Calculated Average Pixel Difference:</strong> {{ average_pixel_difference }}</p>
             {% endif %}
 
-            {# Add conditional blocks here to display any basic analysis specific maps or data #}
-            {# Example: {% if advanced_map %} <img src="data:image/png;base64,{{ basic_map|b64encode }}" alt="Basic Map"> {% endif %} #}
+             {% if basic_map %} <img src="data:image/png;base64,{{ basic_map|b64encode }}" alt="Basic Map"> {% endif %} 
 
         {% endif %}
 

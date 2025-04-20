@@ -1,20 +1,17 @@
 {% load encode %}
-{% load static %} {# Load the static files tags #}
+{% load static %} 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Land Use Change Analysis</title>
-    {# Link to the external stylesheet #}
+    <title>Land-Use Change Analysis</title>
     <link rel="stylesheet" href="{% static 'land_use_app/css/style.css' %}">
 </head>
 <body>
     <div class="container">
 
-        <h1>Land Use Change Analysis Tool</h1>
-
-        {# Display general error messages if any #}
+        <h1 style="color:white;">Land-Use Change Analysis Tool</h1>
         {% if error_message %}
             <p class="error-message">{{ error_message }}</p>
         {% endif %}
@@ -25,6 +22,7 @@
             {{ form.as_p }}
 
             <div class="form-actions">
+                 <!-- <button type="submit" name="reset" value="true">Reset</button>  -->
                  <button type="submit" name="analysis_type" value="basic">Perform Basic Analysis</button>
                  <button type="submit" name="analysis_type" value="advanced">Perform Advanced Analysis</button>
             </div>

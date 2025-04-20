@@ -259,6 +259,13 @@ def analyze_images(request):
     context = {}
 
     if request.method == 'POST':
+        if 'reset' in request.POST:
+            logger.info("Reset button clicked. Returning empty form.")
+            # Create a fresh, empty form
+            form = ImageUploadForm()
+            context = {'form': form}
+            return render(request, 'land_use_app/input_images.html', context) # Use your app name
+        
         form = ImageUploadForm(request.POST, request.FILES)
 
         analysis_type = request.POST.get('analysis_type')

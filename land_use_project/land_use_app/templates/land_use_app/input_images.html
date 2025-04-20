@@ -1,26 +1,207 @@
-{% load encode %}
+{% load encode %} {# Assumes you have a custom template tag filter named 'b64encode' in a 'templatetags/encode.py' file #}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Land Use Change Analysis</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f8f8f8;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            margin-top: 20px; /* Add some space above headers */
+        }
+         h1:first-child { /* No top margin for the first H1 */
+             margin-top: 0;
+         }
+        form {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+         form p { /* Style for form fields rendered as <p> */
+             margin-bottom: 15px;
+         }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid red;
+            background-color: #ffebeb;
+            border-radius: 4px;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        .legend-color {
+            display: inline-block;
+            width: 16px; /* Slightly larger */
+            height: 16px; /* Slightly larger */
+            margin-right: 8px;
+            border: 1px solid #666; /* Stronger border */
+            vertical-align: middle; /* Align with text */
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.2); /* Slight shadow */
+        }
+         /* Style for the 'No Change' legend item border for the segmentation map */
+        .legend-color.no-change {
+             border: 1px dashed #999; /* Dashed border for areas without change highlight */
+             background-color: transparent; /* Transparent background */
+             box-shadow: none;
+        }
+
+        img {
+            max-width: 100%; /* Ensure image fits within container */
+            height: auto;
+            display: block; /* Prevent extra space below image */
+            margin-top: 15px;
+            border: 1px solid #ccc;
+            padding: 5px;
+            background-color: #fff;
+        }
+        ul {
+            list-style: none; /* Remove default list bullets */
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+         button {
+             padding: 10px 15px;
+             background-color: #007bff;
+             color: white;
+             border: none;
+             border-radius: 4px;
+             cursor: pointer;
+             font-size: 1em;
+             margin-right: 10px; /* Space between buttons */
+             transition: background-color 0.3s ease; /* Smooth hover */
+         }
+         button:hover {
+             background-color: #0056b3;
+         }
+         button:last-child { /* No margin on the last button */
+             margin-right: 0;
+         }
+         input[type="file"] {
+             margin-bottom: 10px;
+             display: block; /* Ensure file inputs are on new lines */
+         }
+         /* Style for labels rendered by form.as_p */
+         form p label {
+             display: inline-block;
+             margin-bottom: 5px;
+             font-weight: bold;
+         }
+    </style>
 </head>
 <body>
-    <h1>Upload Input Images</h1>
+    <h1>Land Use Change Analysis Tool</h1>
+    {% if error_message %}
+        <p class="error-message">{{ error_message }}</p>
+    {% endif %}
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Analyze</button>
+        <button type="submit" name="analysis_type" value="basic">Perform Basic Analysis</button>
+        <button type="submit" name="analysis_type" value="advanced">Perform Advanced Analysis</button>
     </form>
 
-    {% if change_percent %}
-        <p><strong>Change Detected:</strong> {{ change_percent }}% of the area</p>
-    {% endif %}
+    {# Display Analysis Results Section #}
+    {% if analysis_type_performed %}
+    <div class="results">
+        {% if analysis_type_performed == 'basic' %}
+            <h2>Basic Analysis Results (Pixel Difference)</h2>
+        {% elif analysis_type_performed == 'advanced' %}
+            <h2>Advanced Analysis Results (Segmentation Change Detection)</h2>
+        {% endif %}
 
-    {% if change_map %}
-        <h2>Detected Change Areas</h2>
-        <img src="data:image/png;base64,{{ change_map|b64encode }}">
-    {% endif %}
+        {# --- Display Basic Analysis Results --- #}
+        {% if analysis_type_performed == 'basic' %}
+            {% if basic_message %}
+                <p>{{ basic_message }}</p>
+            {% endif %}
+
+            <!-- {% if basic_change_percent is not None %} {# Check specifically for None, as 0% is possible #}
+                <p><strong>Total Pixel Change Detected:</strong> {{ basic_change_percent }}%</p>
+                 <p style="font-size: 0.9em; color: #555;">
+                    This percentage is based on pixel value difference after thresholding and may not represent meaningful land use changes.
+                </p>
+            {% endif %} -->
+            <h3>Basic Change Map</h3>
+            <p style="font-size: 0.9em; color: #555;">
+                 <span class="legend-color" style="background-color: red; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.2);"></span> Highlighted areas and red boxes indicate detected changes in land use.
+            </p>
+
+            {% if basic_change_map %}
+                <img src="data:image/png;base64,{{ basic_change_map|b64encode }}" alt="Basic Change Map">
+            {% endif %}
+
+
+        {# --- Display Advanced Analysis Results (Segmentation) --- #}
+        {% elif analysis_type_performed == 'advanced' %}
+
+            {% if segmentation_change_percent is not None %} {# Check specifically for None, as 0% is possible #}
+                <p><strong>Total Area with Simplified Category Change:</strong> {{ segmentation_change_percent }}%</p>
+            {% endif %}
+
+            {% if segmentation_change_summary %}
+                <h3>Change Breakdown by Transition Type</h3>
+                <p style="font-size: 0.9em; color: #555;">
+                    Percentage of total image area that transitioned from one simplified category to another (e.g., Vegetation to Buildings).
+                </p>
+                <ul>
+                     {# Loop through the calculated specific transitions (e.g., "Vegetation -> Buildings") #}
+                    {% for transition, percent in segmentation_change_summary.items %}
+                        <li>
+                            <strong>{{ transition|capfirst }}:</strong> {{ percent }}%
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {# Legend explaining the colors used on the change map visualization for Segmentation #}
+            {% if segmentation_legend_items %}
+                <h3>Change Map Color Legend</h3>
+                 <p style="font-size: 0.9em; color: #555;">
+                    Highlighted areas on the map indicate a change occurred based on simplified land use categories as colored by the resulting category (in the second image).
+                    Areas that didn't experience significant changes retain the original color.
+                </p>
+                <ul>
+                    {% for item in segmentation_legend_items %}
+                        <li>
+                            <span class="legend-color" style="background-color: {{ item.color }};"></span> {# Ignore the warning - it's a false positive from the linter #}
+                            {{ item.name }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if segmentation_change_map %}
+                <h3>Change Map Visualization</h3>
+                {# Display the segmentation change map image #}
+                <img src="data:image/png;base64,{{ segmentation_change_map|b64encode }}" alt="Segmentation Change Map - Highlighted Differences">
+            {% endif %}
+
+        {% endif %} {# End of analysis type conditional block #}
+
+
+    </div> {# End .results #}
+    {% endif %} {# End if analysis_type_performed exists #}
 
 </body>
 </html>

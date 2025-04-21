@@ -44,12 +44,18 @@ def segment_image(image: Image.Image):
     try:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model.to(device)
-        inputs = feature_extractor(images=image, return_tensors="pt").to(device)
+        # inputs = feature_extractor(image=image, return_tensors="pt").to(device)
+        # Extract the tensor (e.g., 'pixel_values') from the returned dictionary
+        inputs = feature_extractor(image=image, return_tensors="pt")
+
+        # Move the tensor to the device (e.g., 'pixel_values' is the key with tensor)
+        pixel_values = inputs["pixel_values"].to(device)
 
         with torch.no_grad():
-            outputs = model(**inputs)
+            outputs = model(pixel_values)
+            # outputs = model(**inputs)
 
-        logits = outputs.logits
+        logits = outputs
         logits = torch.nn.functional.interpolate(
             logits,
             size=image.size[::-1],

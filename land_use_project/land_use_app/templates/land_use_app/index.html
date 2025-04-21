@@ -15,7 +15,7 @@
         {% if error_message %}
             <p class="error-message">{{ error_message }}</p>
         {% endif %}
-
+        <p style="color: white;">Please upload 2 aerial input images to be analyzed. Start with the old followed by the most recent.</p>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {# Display form fields and any field-specific errors #}

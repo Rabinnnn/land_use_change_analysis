@@ -53,7 +53,7 @@ Before running the project, ensure you have the following installed:
 4.  **Activate the virtual environment:**
     * On Windows:
         ```bash
-        $ .\land_venv\Scripts\activate
+        $ . land_venv/Scripts/activate
         ```
     * On macOS and Linux:
         ```bash

@@ -110,6 +110,15 @@ def _perform_basic_analysis(image1_cropped, image2_cropped):
         return {'error_message': f"An error occurred during Basic Analysis: {e}"}
 
 # --- Advanced Analysis ---
+def overlay_changes_on_image(original_img_np, change_mask, color=(255, 0, 0), alpha=0.5):
+    """
+    Overlays red highlights on areas that have changed on the original second image.
+    """
+    overlay = original_img_np.copy()
+    overlay[change_mask == 255] = color  # color only the changed pixels
+    blended = cv2.addWeighted(overlay, alpha, original_img_np, 1 - alpha, 0)
+    return blended
+
 def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
     try:
         seg1 = segment_image(image1)
@@ -121,33 +130,60 @@ def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
         if seg1.shape != seg2.shape:
             seg2 = cv2.resize(seg2, (seg1.shape[1], seg1.shape[0]), interpolation=cv2.INTER_NEAREST)
 
-        change_map = (seg1 != seg2).astype(np.uint8) * 255
-        change_color = np.zeros((seg1.shape[0], seg1.shape[1], 3), dtype=np.uint8)
-        change_color[change_map == 255] = [255, 0, 0]
-        change_pil = Image.fromarray(change_color)
+        # Convert PIL image to NumPy RGB
+        image2_np = np.array(image2.convert("RGB"))
 
-        buffer = cv2.imencode('.png', cv2.cvtColor(np.array(change_pil), cv2.COLOR_RGB2BGR))[1]
-        change_base64 = base64.b64encode(buffer).decode('utf-8')
+        # Prepare overlay
+        overlay = np.zeros_like(image2_np)
 
-        unique_labels = set(np.unique(seg1)) | set(np.unique(seg2))
+        unique_labels = sorted(set(np.unique(seg1)) | set(np.unique(seg2)))
         category_changes = {}
+        legend_items = []
+
         for label in unique_labels:
+            name = next((k for k, v in SIMPLIFIED_IDS.items() if v == label), f"Class {label}")
+            color = SIMPLIFIED_COLORS.get(label, (255, 255, 255))
+
             mask1 = (seg1 == label)
             mask2 = (seg2 == label)
+            change_mask = np.logical_xor(mask1, mask2)
+
+            # Paint only changed areas with the class color
+            overlay[change_mask] = color
+
+            # Change percentage for this category
             intersection = np.logical_and(mask1, mask2).sum()
             union = np.logical_or(mask1, mask2).sum()
             change_pct = 100 - (intersection / union * 100) if union != 0 else 0
-            category_changes[f"Class {label}"] = round(change_pct, 2)
+            category_changes[name] = round(change_pct, 2)
+
+            legend_items.append({
+                'label': name,
+                'color': '#{:02x}{:02x}{:02x}'.format(*color),
+                'change_percent': round(change_pct, 2)
+            })
+
+        # Blend overlay with original image
+        alpha = 0.5
+        blended = cv2.addWeighted(overlay, alpha, image2_np, 1 - alpha, 0)
+
+        # Encode to base64
+        _, buffer = cv2.imencode('.png', blended)
+        change_base64 = base64.b64encode(buffer).decode('utf-8')
 
         return {
             'change_map_base64': change_base64,
-            'category_changes': category_changes
+            'category_changes': category_changes,
+            'legend_items': legend_items
         }
 
     except Exception as e:
         logger.error(f"Error during advanced analysis: {e}")
         traceback.print_exc()
         return {'error_message': 'Failed to perform advanced analysis.'}
+
+
+
 
 # --- Main View ---
 def analyze_images(request):
@@ -173,8 +209,8 @@ def analyze_images(request):
 
                 if analysis_type == 'basic':
                     analysis_results = _perform_basic_analysis(image1_cropped, image2_cropped)
-                    context['analysis_type_performed'] = 'basic'
 
+                    context['analysis_type_performed'] = 'basic'
                 elif analysis_type == 'advanced':
                     app_config = apps.get_app_config('land_use_app')
                     if app_config.model_load_error:
@@ -183,8 +219,24 @@ def analyze_images(request):
                         context['form'] = form 
                         return render(request, 'land_use_app/index.html', context)
 
+                    # Perform the advanced analysis
                     analysis_results = _perform_advanced_analysis(image1_cropped, image2_cropped)
+                    # print("Analysis Results:", analysis_results)
+
+                    # Unpack analysis results into context keys expected by the template
                     context['analysis_type_performed'] = 'advanced'
+                    # context['segmentation_change_map'] = analysis_results.get('change_map_base64')
+                    # context['segmentation_change_percent'] = analysis_results.get('change_percent')
+                    # context['segmentation_change_summary'] = analysis_results.get('change_summary')
+                    # context['segmentation_legend_items'] = analysis_results.get('legend_items')
+                    context['segmentation_change_map'] = analysis_results['change_map_base64']
+                    context['legend_items'] = analysis_results['legend_items']
+                    context['segmentation_change_percent'] = (
+                        sum(analysis_results['category_changes'].values()) / len(analysis_results['category_changes'])
+                        if analysis_results.get('category_changes') else 0
+                    )
+
+
 
                 else:
                     context['error_message'] = "Invalid analysis type specified."

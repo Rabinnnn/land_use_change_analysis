@@ -84,28 +84,27 @@
                 {% endif %}
 
                 {# Legend explaining the colors used on the change map visualization for Segmentation #}
-                {% if segmentation_legend_items %}
+                {% if legend_items %}
                     <h3>Change Map Color Legend</h3>
-                    <p style="font-size: 0.9em; color: #555;">
-                        Highlighted areas on the map indicate a change occurred based on simplified land use categories as colored by the resulting category (in the second image).
-                        Areas that didn't experience significant changes retain the original color.
+                    <p style="font-size: 0.9em; color: #bbb;">
+                        The following categories experienced significant changes. The color represents the category in the second (more recent) image. 
                     </p>
                     <div class="legend">
                         <ul>
-                            {% for item in segmentation_legend_items %}
+                            {% for item in legend_items %}
                                 <li>
                                     <span class="legend-color" style="background-color: {{ item.color }};"></span>
-                                    {{ item.name }}
+                                    {{ item.label }} – {{ item.change_percent }}%
                                 </li>
                             {% endfor %}
-                             <li><span class="legend-color no-change"></span> Areas with no significant simplified category change.</li>
                         </ul>
                     </div>
                 {% endif %}
 
+
                 {% if segmentation_change_map %}
                     <h3>Change Map Visualization</h3>
-                    <img src="data:image/png;base64,{{ segmentation_change_map|b64encode }}" alt="Segmentation Change Map - Highlighted Differences">
+                    <img src="data:image/png;base64,{{ segmentation_change_map }}" alt="Segmentation Change Map - Highlighted Differences">
                 {% endif %}
 
             {% endif %} {# End of analysis type conditional block #}

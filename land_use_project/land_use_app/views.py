@@ -260,13 +260,6 @@ def analyze_images(request):
     context = {}
 
     if request.method == 'POST':
-    
-        # if 'reset' in request.POST:
-        #     logger.info("Reset button clicked. Returning empty form.")
-        #     # Create a fresh, empty form
-        #     form = ImageUploadForm()
-        #     context = {'form': form}
-        #     return render(request, 'land_use_app/index.html', context)
         
         form = ImageUploadForm(request.POST, request.FILES)
        
@@ -292,14 +285,12 @@ def analyze_images(request):
                 # --- Call the appropriate analysis function ---
                 analysis_results = {}
                 if analysis_type == 'basic':
-                    # Call the function for the pixel difference analysis
                     analysis_results = _perform_basic_analysis(image1_cropped, image2_cropped)
                     context['analysis_type_performed'] = 'basic'
 
                 elif analysis_type == 'advanced':
-                    # Call the function for the segmentation analysis
                     # First, check if the model loaded successfully during app startup
-                    app_config = apps.get_app_config('land_use_app') # <-- Use your actual app name
+                    app_config = apps.get_app_config('land_use_app') 
                     if app_config.model_load_error:
                          logger.error("Cannot perform Advanced Analysis: Model failed to load during startup.")
                          context['error_message'] = "Advanced Analysis requires the Segformer model, which failed to load on the server. Please contact the administrator."
@@ -321,7 +312,7 @@ def analyze_images(request):
 
             except Exception as e:
                  logger.error(f"An unexpected error occurred in analyze_images view: {e}")
-                 traceback.print_exc() # Log traceback
+                 traceback.print_exc() 
                  context['error_message'] = f"An unexpected server error occurred: {e}. Check server logs."
 
         context['form'] = form

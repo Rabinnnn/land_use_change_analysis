@@ -20,6 +20,7 @@ SIMPLIFIED_IDS = {
     "Roads": 3,
     "Agricultural": 4,
     "Swimming Pool": 5,
+    "Bare Soil": 6,
 }
 
 SIMPLIFIED_COLORS = {
@@ -29,7 +30,9 @@ SIMPLIFIED_COLORS = {
     SIMPLIFIED_IDS["Roads"]: (128, 64, 128),           # Purple-ish
     SIMPLIFIED_IDS["Agricultural"]: (218, 165, 32),    # Goldenrod
     SIMPLIFIED_IDS["Swimming Pool"]: (0, 191, 255),    # Deep Sky Blue
+    SIMPLIFIED_IDS["Bare Soil"]: (139, 69, 19),        # Saddle Brown
 }
+
 
 
 # --- Mapping 15 model output classes to simplified categories ---
@@ -38,7 +41,7 @@ MODEL_TO_SIMPLIFIED = {
     1: SIMPLIFIED_IDS["Buildings"],        # Building
     2: SIMPLIFIED_IDS["Roads"],            # Pervious surface
     3: SIMPLIFIED_IDS["Roads"],            # Impervious surface
-    4: SIMPLIFIED_IDS["Other"],            # Bare soil
+    4: SIMPLIFIED_IDS["Bare Soil"],        # Bare soil (moved from 'Other')
     5: SIMPLIFIED_IDS["Vegetation"],       # Coniferous
     6: SIMPLIFIED_IDS["Vegetation"],       # Deciduous
     7: SIMPLIFIED_IDS["Vegetation"],       # Brushwood
@@ -50,6 +53,7 @@ MODEL_TO_SIMPLIFIED = {
     13: SIMPLIFIED_IDS["Other"],           # Snow
     14: SIMPLIFIED_IDS["Other"],           # Greenhouse
 }
+
 
 
 
@@ -140,23 +144,14 @@ def _perform_basic_analysis(image1_cropped, image2_cropped):
         return {'error_message': f"An error occurred during Basic Analysis: {e}"}
 
 # --- Advanced Analysis ---
-def _blend_overlay(base_img, mask, color, alpha=0.5):
-    """
-    Applies semi-transparent color overlay only where `mask` is True.
-    """
-    overlay = base_img.copy()
+def _blend_overlay(image, mask, color_bgr, alpha=0.5):
+    overlay = image.copy()
+    for c in range(3):
+        overlay[:, :, c] = np.where(mask, 
+                                    (1 - alpha) * image[:, :, c] + alpha * color_bgr[c],
+                                    image[:, :, c])
+    return overlay.astype(np.uint8)
 
-    # Ensure mask is 3 channels
-    mask_3ch = np.stack([mask] * 3, axis=-1)
-
-    color_array = np.full_like(base_img, color, dtype=np.uint8)
-
-    # Blend only where mask is true
-    blended = np.where(mask_3ch, 
-                       (alpha * color_array + (1 - alpha) * overlay).astype(np.uint8), 
-                       overlay)
-    
-    return blended
 
 
 def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
@@ -212,7 +207,19 @@ def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
 
             # blended_overlay = _blend_overlay(blended_overlay, change_mask, color, alpha=0.3)
             bgr_color = tuple(reversed(color))  # Convert RGB to BGR
-            blended_overlay = _blend_overlay(blended_overlay, change_mask, bgr_color, alpha=0.5)
+            # blended_overlay = _blend_overlay(blended_overlay, change_mask, bgr_color, alpha=0.5)
+            # Only apply overlay where there is change in this category
+            if np.any(change_mask):
+                blended_overlay = _blend_overlay(blended_overlay, change_mask, bgr_color, alpha=0.5)
+
+          # Restore original pixels where there is no change at all
+        no_change_mask = seg1 == seg2
+        for c in range(3):  # for RGB channels
+            blended_overlay[:, :, c] = np.where(
+                no_change_mask, 
+                image2_np[:, :, c], 
+                blended_overlay[:, :, c]
+            )
 
         # Encode blended_overlay to base64 for display
         _, buffer = cv2.imencode('.png', blended_overlay)

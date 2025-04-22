@@ -162,24 +162,25 @@ def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
         if seg1_raw is None or seg2_raw is None:
             return {'error_message': 'Segmentation failed for one or both images.'}
 
-        # Map model output classes to simplified classes
         seg1 = map_to_simplified(seg1_raw)
         seg2 = map_to_simplified(seg2_raw)
-
-        logger.info(f"Unique classes in seg1 (mapped): {np.unique(seg1)}")
-        logger.info(f"Unique classes in seg2 (mapped): {np.unique(seg2)}")
 
         if seg1.shape != seg2.shape:
             seg2 = cv2.resize(seg2, (seg1.shape[1], seg1.shape[0]), interpolation=cv2.INTER_NEAREST)
 
         image2_np = np.array(image2.convert("RGB"))
-        # blended_overlay = image2_np.copy()
-        blended_overlay = np.array(image2.convert("RGB"))
+        blended_overlay = image2_np.copy()
 
+        total_pixels = seg1.size
+        changed_pixels_total = np.sum(seg1 != seg2)
+        total_change_pct = round((changed_pixels_total / total_pixels) * 100, 2)
 
         unique_labels = sorted(set(np.unique(seg1)) | set(np.unique(seg2)))
         category_changes = {}
         legend_items = []
+
+        # --- Transition breakdown ---
+        transition_counts = {}
 
         for label in unique_labels:
             name = next((k for k, v in SIMPLIFIED_IDS.items() if v == label), f"Class {label}")
@@ -187,13 +188,13 @@ def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
 
             mask1 = (seg1 == label)
             mask2 = (seg2 == label)
+
             change_mask = np.logical_xor(mask1, mask2)
 
-            # Log pixel counts for the change mask
             changed_pixels = np.sum(change_mask)
             logger.info(f"Applied color {color} to {changed_pixels} pixels")
 
-            # Calculate change percentage for this category
+            # Change percent (Jaccard approach)
             intersection = np.logical_and(mask1, mask2).sum()
             union = np.logical_or(mask1, mask2).sum()
             change_pct = 100 - (intersection / union * 100) if union != 0 else 0
@@ -205,30 +206,41 @@ def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
                 'change_percent': round(change_pct, 2)
             })
 
-            # blended_overlay = _blend_overlay(blended_overlay, change_mask, color, alpha=0.3)
-            bgr_color = tuple(reversed(color))  # Convert RGB to BGR
-            # blended_overlay = _blend_overlay(blended_overlay, change_mask, bgr_color, alpha=0.5)
-            # Only apply overlay where there is change in this category
             if np.any(change_mask):
+                bgr_color = tuple(reversed(color))
                 blended_overlay = _blend_overlay(blended_overlay, change_mask, bgr_color, alpha=0.5)
 
-          # Restore original pixels where there is no change at all
-        no_change_mask = seg1 == seg2
-        for c in range(3):  # for RGB channels
-            blended_overlay[:, :, c] = np.where(
-                no_change_mask, 
-                image2_np[:, :, c], 
-                blended_overlay[:, :, c]
-            )
+        # --- Compute all transitions: from -> to ---
+        transition_matrix = {}
+        flat_seg1 = seg1.flatten()
+        flat_seg2 = seg2.flatten()
 
-        # Encode blended_overlay to base64 for display
+        for from_class, to_class in zip(flat_seg1, flat_seg2):
+            if from_class != to_class:
+                key = (from_class, to_class)
+                transition_matrix[key] = transition_matrix.get(key, 0) + 1
+
+        transition_breakdown = []
+        for (from_class, to_class), count in sorted(transition_matrix.items(), key=lambda x: x[1], reverse=True):
+            pct = (count / total_pixels) * 100
+            from_label = next((k for k, v in SIMPLIFIED_IDS.items() if v == from_class), f"Class {from_class}")
+            to_label = next((k for k, v in SIMPLIFIED_IDS.items() if v == to_class), f"Class {to_class}")
+            transition_breakdown.append({
+                'from': from_label,
+                'to': to_label,
+                'percent': round(pct, 2)
+            })
+
+        # Encode overlay
         _, buffer = cv2.imencode('.png', blended_overlay)
         advanced_change_map = base64.b64encode(buffer).decode('utf-8')
 
         return {
             'advanced_change_map': advanced_change_map,
+            'total_change_percent': total_change_pct,
             'category_changes': category_changes,
-            'legend_items': legend_items
+            'legend_items': legend_items,
+            'transition_breakdown': transition_breakdown
         }
 
     except Exception as e:

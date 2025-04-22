@@ -1,5 +1,5 @@
 {% load encode %}
-{% load static %} 
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,60 +10,46 @@
 </head>
 <body>
     <div class="container">
-
         <h1 style="color:white;">Land-Use Change Analysis Tool</h1>
+
         {% if error_message %}
             <p class="error-message">{{ error_message }}</p>
         {% endif %}
+
         <p style="color: white;">Please upload 2 aerial input images to be analyzed. Start with the old followed by the most recent.</p>
+
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            {# Display form fields and any field-specific errors #}
             {{ form.as_p }}
-
             <div class="form-actions">
-                 <!-- <button type="submit" name="reset" value="true">Reset</button>  -->
                  <button type="submit" name="analysis_type" value="basic">Perform Basic Analysis</button>
                  <button type="submit" name="analysis_type" value="advanced">Perform Advanced Analysis</button>
             </div>
         </form>
 
-        {# Display Analysis Results Section #}
         {% if analysis_type_performed %}
         <div class="results">
-            {# Display header indicating which analysis was performed #}
             {% if analysis_type_performed == 'basic' %}
                 <h2>Basic Analysis Results (Pixel Difference)</h2>
-            {% elif analysis_type_performed == 'advanced' %}
-                <h2>Advanced Analysis Results (Segmentation Change Detection)</h2>
-            {% endif %}
-
-            {# --- Display Basic Analysis Results --- #}
-            {% if analysis_type_performed == 'basic' %}
-
                 {% if basic_message %}
                     <p>{{ basic_message }}</p>
                 {% endif %}
-
                 {% if basic_change_percent is not None %}
                     <p><strong>Total Pixel Change Detected:</strong> {{ basic_change_percent }}%</p>
                     <p style="font-size: 0.9em; color: #555;">
                         * This percentage is based on simple pixel value difference after thresholding (threshold = 50) and may include changes due to lighting, shadows, or noise, not just land use.
                     </p>
                 {% endif %}
-
                 <h3>Basic Change Map</h3>
                 <p style="font-size: 0.9em; color: #555;">
-                     <span class="legend-color" style="background-color: red; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.2);"></span> Highlighted areas and red boxes indicate detected pixel differences.
-                 </p>
-
+                    <span class="legend-color" style="background-color: red; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.2);"></span> Highlighted areas and red boxes indicate detected pixel differences.
+                </p>
                 {% if basic_change_map %}
                     <img src="data:image/png;base64,{{ basic_change_map|b64encode }}" alt="Basic Change Map">
                 {% endif %}
 
-
-            {# --- Display Advanced Analysis Results (Segmentation) --- #}
             {% elif analysis_type_performed == 'advanced' %}
+                <h2>Advanced Analysis Results (Segmentation Change Detection)</h2>
 
                 {% if segmentation_change_percent is not None %}
                     <p><strong>Total Area with Simplified Category Change:</strong> {{ segmentation_change_percent }}%</p>
@@ -76,14 +62,11 @@
                     </p>
                     <ul>
                         {% for transition, percent in segmentation_change_summary.items %}
-                            <li>
-                                <strong>{{ transition|capfirst }}:</strong> {{ percent }}%
-                            </li>
+                            <li><strong>{{ transition|capfirst }}:</strong> {{ percent }}%</li>
                         {% endfor %}
                     </ul>
                 {% endif %}
 
-                {# Legend explaining the colors used on the change map visualization for Segmentation #}
                 {% if legend_items %}
                     <h3>Change Map Color Legend</h3>
                     <p style="font-size: 0.9em; color:black;">
@@ -101,24 +84,18 @@
                     </div>
                 {% endif %}
 
-
                 {% if advanced_change_map %}
                     <h3>Change Map Visualization</h3>
                     <img src="data:image/png;base64,{{ advanced_change_map }}" alt="Segmentation Change Map - Highlighted Differences">
                 {% endif %}
-
-            {% endif %} {# End of analysis type conditional block #}
-
-
-        </div> {# End .results #}
-        {% endif %} {# End if analysis_type_performed exists #}
+            {% endif %}
+        </div>
+        {% endif %}
 
         <footer>
             <p>&copy; 2025 Land Use Change Analysis Tool</p>
         </footer>
-
-    </div> 
-        
-<script src="{% static 'land_use_app/js/analyzing.js' %}"></script>      
+    </div>
+<script src="{% static 'land_use_app/js/analyzing.js' %}"></script>
 </body>
 </html>

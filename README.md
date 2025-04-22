@@ -82,6 +82,8 @@ Before running the project, ensure you have the following installed:
     $ cd land_use_project
     $ python3 manage.py runserver
     ```    
+    *Note: On some editors you might notice some parts of the index.html and style.css pages highlighted with some warnings. This is as a result of false-positives produced by the linter. It doesn't affect the app's functionality*
+
 6.  Wait as it loads till it displays a message that looks like this on the console:
 "Django version 5.2, using settings 'land_use_project.settings'
 Starting development server at http://127.0.0.1:8000/
@@ -99,11 +101,12 @@ Open your web browser and go to `http://127.0.0.1:8000/` (or the address shown i
     * Click **"Perform Advanced Analysis"** for the segmentation change detection method.
 5.  The page will reload, displaying the results relevant to the analysis type you selected, including percentage change, a change map visualization, and additional details or legends depending on the analysis.
 
+*Note: The advanced analysis might take a couple of seconds to complete depending on your system.*
+
 ## Recommendations
 
-* The type of input images you upload will determine the ouput. You should aim for high quality aerial images to get the best output. Keep in mind that they should be of the same place over a
-period of time. For images taken at very high altitudes, containing small-sized structures basic analysis performs better. For images containing relatively large objects that are easily distinguishable advanced analysis works best.
-Consider using the images in the sample_input_images directory. Upload the files in ascending order e.g image1 then image 2, to allow proper visualization of changes in the output.
+* The type of input images you upload will determine the ouput. You should aim for high quality images to get the best output. Keep in mind that they should be of the same place over a period of time (e.g 10 years apart). For images taken at very high altitudes, containing small-sized structures that are not easily distinguishable, basic analysis performs better. For images containing relatively large objects that are easily distinguishable advanced analysis works best.
+Consider using the images in the sample_input_images directory. Upload the files in ascending order e.g image1 then image 2, to allow proper visualization of changes in the output. 
 
 ## Analysis Details
 
@@ -166,6 +169,7 @@ The model is configured to load once per process upon application startup via `A
 │           ├── urls.py                # Project URL patterns (includes app urls)
 │           └── wsgi.py                # WSGI config for traditional servers
 ├──     manage.py                  # Django's command-line utility
+├── sample_input_images        # contains input images that you can use to test the functionality of the app
 ├── README.md                  # Project README file
 └── requirements.txt           # List of project dependencies (e.g opencv-python, numpy, Pillow, torch, transformers)
 

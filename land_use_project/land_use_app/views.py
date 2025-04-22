@@ -8,21 +8,55 @@ import torch
 import base64
 import traceback
 import logging 
-# Removed pipeline import since we are using the model directly from AppConfig
-# from transformers import pipeline
 
 logger = logging.getLogger(__name__)
 
 # --- Category Mappings ---
+# --- Updated Category Mappings ---
+# --- Simplified Category Mappings ---
 SIMPLIFIED_IDS = {
-    "Other": 0, "Buildings": 1, "Vegetation": 2, "Water": 3,
+    "Other": 0,
+    "Buildings": 1,
+    "Vegetation": 2,
+    "Roads": 3,
+    "Agricultural": 4,
+    "Swimming Pool": 5,
 }
+
 SIMPLIFIED_COLORS = {
-    SIMPLIFIED_IDS["Other"]: (100, 100, 100),
-    SIMPLIFIED_IDS["Buildings"]: (255, 255, 0),
-    SIMPLIFIED_IDS["Vegetation"]: (0, 255, 0),
-    SIMPLIFIED_IDS["Water"]: (0, 0, 255),
+    SIMPLIFIED_IDS["Other"]: (100, 100, 100),          # Grey
+    SIMPLIFIED_IDS["Buildings"]: (255, 255, 0),        # Yellow
+    SIMPLIFIED_IDS["Vegetation"]: (0, 255, 0),         # Green
+    SIMPLIFIED_IDS["Roads"]: (128, 64, 128),           # Purple-ish
+    SIMPLIFIED_IDS["Agricultural"]: (107, 142, 35),    # Olive Green
+    SIMPLIFIED_IDS["Swimming Pool"]: (0, 191, 255),    # Deep Sky Blue
 }
+
+# --- Mapping 15 model output classes to simplified categories ---
+MODEL_TO_SIMPLIFIED = {
+    0: SIMPLIFIED_IDS["Other"],            # background / undefined
+    1: SIMPLIFIED_IDS["Buildings"],        # Building
+    2: SIMPLIFIED_IDS["Roads"],            # Pervious surface
+    3: SIMPLIFIED_IDS["Roads"],            # Impervious surface
+    4: SIMPLIFIED_IDS["Other"],            # Bare soil
+    5: SIMPLIFIED_IDS["Vegetation"],       # Coniferous
+    6: SIMPLIFIED_IDS["Vegetation"],       # Deciduous
+    7: SIMPLIFIED_IDS["Vegetation"],       # Brushwood
+    8: SIMPLIFIED_IDS["Agricultural"],     # Vineyard
+    9: SIMPLIFIED_IDS["Agricultural"],     # Herbaceous
+    10: SIMPLIFIED_IDS["Agricultural"],    # Agricultural land
+    11: SIMPLIFIED_IDS["Agricultural"],    # Plowed land
+    12: SIMPLIFIED_IDS["Swimming Pool"],   # Swimming pool
+    13: SIMPLIFIED_IDS["Other"],           # Snow
+    14: SIMPLIFIED_IDS["Other"],           # Greenhouse
+}
+
+
+def map_to_simplified(segmentation):
+    simplified_mask = np.zeros_like(segmentation)
+    for model_class_id, simple_class_id in MODEL_TO_SIMPLIFIED.items():
+        simplified_mask[segmentation == model_class_id] = simple_class_id
+    return simplified_mask
 
 # --- Helpers ---
 def center_crop(img, target_size):
@@ -44,16 +78,11 @@ def segment_image(image: Image.Image):
     try:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model.to(device)
-        # inputs = feature_extractor(image=image, return_tensors="pt").to(device)
-        # Extract the tensor (e.g., 'pixel_values') from the returned dictionary
         inputs = feature_extractor(image=image, return_tensors="pt")
-
-        # Move the tensor to the device (e.g., 'pixel_values' is the key with tensor)
         pixel_values = inputs["pixel_values"].to(device)
 
         with torch.no_grad():
             outputs = model(pixel_values)
-            # outputs = model(**inputs)
 
         logits = outputs
         logits = torch.nn.functional.interpolate(
@@ -110,31 +139,47 @@ def _perform_basic_analysis(image1_cropped, image2_cropped):
         return {'error_message': f"An error occurred during Basic Analysis: {e}"}
 
 # --- Advanced Analysis ---
-def overlay_changes_on_image(original_img_np, change_mask, color=(255, 0, 0), alpha=0.5):
+def _blend_overlay(base_img, mask, color, alpha=0.5):
     """
-    Overlays red highlights on areas that have changed on the original second image.
+    Applies semi-transparent color overlay only where `mask` is True.
     """
-    overlay = original_img_np.copy()
-    overlay[change_mask == 255] = color  # color only the changed pixels
-    blended = cv2.addWeighted(overlay, alpha, original_img_np, 1 - alpha, 0)
+    overlay = base_img.copy()
+
+    # Ensure mask is 3 channels
+    mask_3ch = np.stack([mask] * 3, axis=-1)
+
+    color_array = np.full_like(base_img, color, dtype=np.uint8)
+
+    # Blend only where mask is true
+    blended = np.where(mask_3ch, 
+                       (alpha * color_array + (1 - alpha) * overlay).astype(np.uint8), 
+                       overlay)
+    
     return blended
+
 
 def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
     try:
-        seg1 = segment_image(image1)
-        seg2 = segment_image(image2)
+        seg1_raw = segment_image(image1)
+        seg2_raw = segment_image(image2)
 
-        if seg1 is None or seg2 is None:
+        if seg1_raw is None or seg2_raw is None:
             return {'error_message': 'Segmentation failed for one or both images.'}
+
+        # Map model output classes to simplified classes
+        seg1 = map_to_simplified(seg1_raw)
+        seg2 = map_to_simplified(seg2_raw)
+
+        logger.info(f"Unique classes in seg1 (mapped): {np.unique(seg1)}")
+        logger.info(f"Unique classes in seg2 (mapped): {np.unique(seg2)}")
 
         if seg1.shape != seg2.shape:
             seg2 = cv2.resize(seg2, (seg1.shape[1], seg1.shape[0]), interpolation=cv2.INTER_NEAREST)
 
-        # Convert PIL image to NumPy RGB
         image2_np = np.array(image2.convert("RGB"))
+        # blended_overlay = image2_np.copy()
+        blended_overlay = np.array(image2.convert("RGB"))
 
-        # Prepare overlay
-        overlay = np.zeros_like(image2_np)
 
         unique_labels = sorted(set(np.unique(seg1)) | set(np.unique(seg2)))
         category_changes = {}
@@ -148,10 +193,11 @@ def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
             mask2 = (seg2 == label)
             change_mask = np.logical_xor(mask1, mask2)
 
-            # Paint only changed areas with the class color
-            overlay[change_mask] = color
+            # Log pixel counts for the change mask
+            changed_pixels = np.sum(change_mask)
+            logger.info(f"Applied color {color} to {changed_pixels} pixels")
 
-            # Change percentage for this category
+            # Calculate change percentage for this category
             intersection = np.logical_and(mask1, mask2).sum()
             union = np.logical_or(mask1, mask2).sum()
             change_pct = 100 - (intersection / union * 100) if union != 0 else 0
@@ -163,16 +209,14 @@ def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
                 'change_percent': round(change_pct, 2)
             })
 
-        # Blend overlay with original image
-        alpha = 0.5
-        blended = cv2.addWeighted(overlay, alpha, image2_np, 1 - alpha, 0)
+            blended_overlay = _blend_overlay(blended_overlay, change_mask, color, alpha=0.3)
 
-        # Encode to base64
-        _, buffer = cv2.imencode('.png', blended)
-        change_base64 = base64.b64encode(buffer).decode('utf-8')
+        # Encode blended_overlay to base64 for display
+        _, buffer = cv2.imencode('.png', blended_overlay)
+        advanced_change_map = base64.b64encode(buffer).decode('utf-8')
 
         return {
-            'change_map_base64': change_base64,
+            'advanced_change_map': advanced_change_map,
             'category_changes': category_changes,
             'legend_items': legend_items
         }
@@ -181,8 +225,6 @@ def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
         logger.error(f"Error during advanced analysis: {e}")
         traceback.print_exc()
         return {'error_message': 'Failed to perform advanced analysis.'}
-
-
 
 
 # --- Main View ---
@@ -209,8 +251,8 @@ def analyze_images(request):
 
                 if analysis_type == 'basic':
                     analysis_results = _perform_basic_analysis(image1_cropped, image2_cropped)
-
                     context['analysis_type_performed'] = 'basic'
+
                 elif analysis_type == 'advanced':
                     app_config = apps.get_app_config('land_use_app')
                     if app_config.model_load_error:
@@ -219,41 +261,27 @@ def analyze_images(request):
                         context['form'] = form 
                         return render(request, 'land_use_app/index.html', context)
 
-                    # Perform the advanced analysis
                     analysis_results = _perform_advanced_analysis(image1_cropped, image2_cropped)
-                    # print("Analysis Results:", analysis_results)
 
-                    # Unpack analysis results into context keys expected by the template
                     context['analysis_type_performed'] = 'advanced'
-                    # context['segmentation_change_map'] = analysis_results.get('change_map_base64')
-                    # context['segmentation_change_percent'] = analysis_results.get('change_percent')
-                    # context['segmentation_change_summary'] = analysis_results.get('change_summary')
-                    # context['segmentation_legend_items'] = analysis_results.get('legend_items')
-                    context['segmentation_change_map'] = analysis_results['change_map_base64']
-                    context['legend_items'] = analysis_results['legend_items']
-                    context['segmentation_change_percent'] = (
-                        sum(analysis_results['category_changes'].values()) / len(analysis_results['category_changes'])
-                        if analysis_results.get('category_changes') else 0
-                    )
-
-
 
                 else:
-                    context['error_message'] = "Invalid analysis type specified."
+                    context['error_message'] = "Invalid analysis type selected."
                     context['form'] = form
                     return render(request, 'land_use_app/index.html', context)
 
                 context.update(analysis_results)
+                context['form'] = form
 
             except Exception as e:
-                logger.error(f"Unexpected error: {e}")
+                logger.error(f"Exception during image analysis: {e}")
                 traceback.print_exc()
-                context['error_message'] = f"Server error occurred: {e}"
-
-        context['form'] = form
-
+                context['error_message'] = "An unexpected error occurred during analysis."
+                context['form'] = form
+        else:
+            context['error_message'] = "Form data is not valid."
+            context['form'] = form
     else:
-        form = ImageUploadForm()
-        context['form'] = form
+        context['form'] = ImageUploadForm()
 
     return render(request, 'land_use_app/index.html', context)

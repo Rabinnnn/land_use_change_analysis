@@ -12,7 +12,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 # --- Category Mappings ---
-# --- Updated Category Mappings ---
 # --- Simplified Category Mappings ---
 SIMPLIFIED_IDS = {
     "Other": 0,
@@ -26,15 +25,16 @@ SIMPLIFIED_IDS = {
 SIMPLIFIED_COLORS = {
     SIMPLIFIED_IDS["Other"]: (100, 100, 100),          # Grey
     SIMPLIFIED_IDS["Buildings"]: (255, 255, 0),        # Yellow
-    SIMPLIFIED_IDS["Vegetation"]: (0, 255, 0),         # Green
+    SIMPLIFIED_IDS["Vegetation"]: (34, 139, 34),       # Forest Green
     SIMPLIFIED_IDS["Roads"]: (128, 64, 128),           # Purple-ish
-    SIMPLIFIED_IDS["Agricultural"]: (107, 142, 35),    # Olive Green
+    SIMPLIFIED_IDS["Agricultural"]: (218, 165, 32),    # Goldenrod
     SIMPLIFIED_IDS["Swimming Pool"]: (0, 191, 255),    # Deep Sky Blue
 }
 
+
 # --- Mapping 15 model output classes to simplified categories ---
 MODEL_TO_SIMPLIFIED = {
-    0: SIMPLIFIED_IDS["Other"],            # background / undefined
+    0: SIMPLIFIED_IDS["Other"],            # Background / undefined
     1: SIMPLIFIED_IDS["Buildings"],        # Building
     2: SIMPLIFIED_IDS["Roads"],            # Pervious surface
     3: SIMPLIFIED_IDS["Roads"],            # Impervious surface
@@ -50,6 +50,7 @@ MODEL_TO_SIMPLIFIED = {
     13: SIMPLIFIED_IDS["Other"],           # Snow
     14: SIMPLIFIED_IDS["Other"],           # Greenhouse
 }
+
 
 
 def map_to_simplified(segmentation):
@@ -209,7 +210,9 @@ def _perform_advanced_analysis(image1: Image.Image, image2: Image.Image):
                 'change_percent': round(change_pct, 2)
             })
 
-            blended_overlay = _blend_overlay(blended_overlay, change_mask, color, alpha=0.3)
+            # blended_overlay = _blend_overlay(blended_overlay, change_mask, color, alpha=0.3)
+            bgr_color = tuple(reversed(color))  # Convert RGB to BGR
+            blended_overlay = _blend_overlay(blended_overlay, change_mask, bgr_color, alpha=0.5)
 
         # Encode blended_overlay to base64 for display
         _, buffer = cv2.imencode('.png', blended_overlay)

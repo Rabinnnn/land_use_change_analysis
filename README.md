@@ -2,7 +2,7 @@
 
 ![User interface](sample_input_images/user_interface_for_readme.png)
 
-This Django web application allows users to upload two images of the same geographic area taken at different times and perform different types of analysis to identify and visualize changes.
+This Django web application allows users to upload two aerial images of the same geographic area taken at different times and perform different types of analysis to identify and visualize changes.
 
 It provides two analysis options: a basic pixel difference analysis and a more advanced semantic segmentation-based change detection.
 
@@ -23,8 +23,8 @@ It provides two analysis options: a basic pixel difference analysis and a more a
     * Generates a visualization map where changed areas are colored according to their *final* simplified category (in the second image).
     * Includes a color legend for the segmentation change map.
 * **Two Analysis Options:** Select between Basic and Advanced analysis using distinct buttons on the same form.
-* **Model Loading:** The large deep learning model for the Advanced analysis is loaded once per process when the application starts, improving efficiency in production environments.
-* **Error Handling:** Basic error messages are displayed to the user, and detailed errors are logged on the server side.
+* **Model Loading:** The large deep learning model (`nvidia/segformer-b3-finetuned-ade-512-512`) for the Advanced analysis is loaded once per process when the application starts, improving efficiency in production environments.
+* **Error Handling:** Basic error messages are displayed to the user, and detailed errors are logged on the server side. Other server-side errors like 404 and 500 have customized pages.
 
 ## Prerequisites
 
@@ -112,7 +112,7 @@ Open your web browser and go to `http://127.0.0.1:8000/` (or the address shown i
     * Click **"Perform Advanced Analysis"** for the segmentation change detection method.
 5.  The page will reload, displaying the results relevant to the analysis type you selected, including percentage change, a change map visualization, and additional details or legends depending on the analysis.
 
-*Note: The advanced analysis might take a couple of seconds to complete depending on your system.*
+*Note: The advanced analysis might take a couple of seconds to complete depending on your system and the image uploaded.*
 
 ## Recommendations
 

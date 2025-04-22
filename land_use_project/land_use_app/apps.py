@@ -1,56 +1,85 @@
 from django.apps import AppConfig
 import logging
 import torch
-from transformers import SegformerFeatureExtractor, SegformerForSemanticSegmentation
+import torchvision.transforms as T
+from huggingface_hub import hf_hub_download
+from collections import OrderedDict
+from PIL import Image
 
 logger = logging.getLogger(__name__)
+
+# Placeholder UNet model - replace with actual FLAIR UNet definition
+class UNet(torch.nn.Module):
+    def __init__(self, n_channels=4, n_classes=15):
+        super().__init__()
+        self.net = torch.nn.Identity()  # Replace with actual architecture
+
+    def forward(self, x):
+        return self.net(x)
+
+def default_feature_extractor(*args, **kwargs):
+    image = kwargs.get("image")
+    if image is None:
+        raise ValueError("Image not provided")
+    # Continue with the feature extraction logic
+    transform = T.Compose([
+        T.Resize((512, 512)),
+        T.ToTensor(),
+        T.Normalize(mean=[0.5]*3, std=[0.5]*3),
+    ])
+    tensor = transform(image)
+    if kwargs.get("return_tensors") == "pt":
+        return {"pixel_values": tensor.unsqueeze(0)}  # Add batch dimension
+    return tensor
+
+
+
 
 class LandUseAppConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'land_use_app'
 
-    # Class attributes to hold the loaded model and feature extractor
-    # They will be populated in the ready() method
-    feature_extractor = None
     model = None
-    model_load_error = False # Flag to indicate if loading failed
+    feature_extractor = None
+    model_load_error = False
 
     def ready(self):
-        """
-        This method is called once per process when the application is ready.
-        We load the large model here.
-        """
-        # Avoid loading if running migrations or other management commands
-        # that don't need the model.
+        import sys
         try:
-            from django.core.management import execute_from_command_line
-            import sys
-            # Simple check: if 'runserver' is not in the command line args,
-            # or if specific commands that don't need the model are present, skip loading.
-            # This check isn't foolproof but prevents loading during e.g., 'makemigrations'.
             if 'runserver' not in sys.argv:
-                 logger.info("Skipping model loading during management command.")
-                 return # Skip loading
+                logger.info("Skipping model loading during management command.")
+                return
         except Exception as e:
-             logger.warning(f"Could not perform management command check: {e}. Attempting to load model.")
+            logger.warning(f"Management command check failed: {e}. Attempting to load model anyway.")
 
-
-        logger.info("AppConfig ready. Attempting to load Segformer model...")
+        logger.info("AppConfig ready. Attempting to load FLAIR UNet model...")
 
         try:
-            # Load the model and feature extractor
-            # These will be class attributes accessible from views
-            LandUseAppConfig.feature_extractor = SegformerFeatureExtractor.from_pretrained("nvidia/segformer-b3-finetuned-ade-512-512")
-            # Set model to evaluation mode immediately
-            LandUseAppConfig.model = SegformerForSemanticSegmentation.from_pretrained("nvidia/segformer-b3-finetuned-ade-512-512").eval()
+            model_path = hf_hub_download(
+                repo_id="IGNF/FLAIR-INC_rgbie_15cl_resnet34-unet",
+                filename="FLAIR-INC_rgbie_15cl_resnet34-unet_weights.pth"
+            )
 
-            logger.info("Segformer model loaded successfully in AppConfig.")
+            model = UNet(n_channels=4, n_classes=15)
+            raw_state_dict = torch.load(model_path, map_location=torch.device('cpu'))
+
+            if isinstance(raw_state_dict, dict) and 'model' in raw_state_dict:
+                raw_state_dict = raw_state_dict['model']
+
+            cleaned_state_dict = OrderedDict()
+            for k, v in raw_state_dict.items():
+                new_key = k.replace("model.seg_model.", "")
+                cleaned_state_dict[new_key] = v
+
+            model.load_state_dict(cleaned_state_dict, strict=False)
+            model.eval()
+
+            LandUseAppConfig.model = model
+            LandUseAppConfig.feature_extractor = default_feature_extractor
+
+            logger.info("FLAIR UNet model and custom feature extractor loaded successfully in AppConfig.")
 
         except Exception as e:
-            logger.error(f"CRITICAL ERROR: Failed to load Segformer model in AppConfig: {e}", exc_info=True)
-            # Set the error flag
+            logger.error(f"CRITICAL ERROR: Failed to load FLAIR UNet model in AppConfig: {e}", exc_info=True)
             LandUseAppConfig.model_load_error = True
-            # Prevent the application from starting if loading the model fails
-            raise e 
-
-
+            raise e

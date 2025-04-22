@@ -60,19 +60,30 @@ Before running the project, ensure you have the following installed:
         $ source land_venv/bin/activate
         ```
 
-4.  **Install dependencies:**
+5.  **Install dependencies:**
     You can install the dependencies using:
     ```bash
     $ pip install -r requirements.txt
     ```
-    This might take a while.
+    This might take a while. Afterwards run:
+
+    ```bash
+    $ cd land_use_project
+    $ python manage.py collectstatic
+    ```
+    if this doesn't work try:
+
+    ```bash
+    $ cd land_use_project
+    $ python3 manage.py collectstatic
+    ```
 
     *Note: PyTorch (`torch`) installation can vary based on your system and whether you have a CUDA-enabled GPU. Refer to the [PyTorch installation page](https://pytorch.org/get-started/locally/) for the exact command.*
 
 
 ## Running the Project
 
-5.  Run the development server:
+6.  Run the development server:
     ```bash
     $ cd land_use_project
     $ python manage.py runserver
@@ -84,7 +95,7 @@ Before running the project, ensure you have the following installed:
     ```    
     *Note: On some editors you might notice some parts of the index.html and style.css pages highlighted with some warnings. This is as a result of false-positives produced by the linter. It doesn't affect the app's functionality*
 
-6.  Wait as it loads till it displays a message that looks like this on the console:
+7.  Wait as it loads till it displays a message that looks like this on the console:
 "Django version 5.2, using settings 'land_use_project.settings'
 Starting development server at http://127.0.0.1:8000/
 Quit the server with CTRL-BREAK."

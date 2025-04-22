@@ -1,0 +1,209 @@
+/* land_use_app/static/land_use_app/css/style.css */
+
+/* Define CSS variables for easier theme changes */
+:root {
+    --primary-color: #007bff; /* Bootstrap primary blue */
+    --primary-color-dark: #0056b3; /* Darker blue for hover */
+    --secondary-color: #28a745; /* Bootstrap success green (example) */
+    --background-color: #f8f9fa; /* Bootstrap light grey background */
+    --surface-color: #fff; /* White surface for cards */
+    --border-color: #dee2e6; /* Bootstrap light grey border */
+    --text-color: #343a40; /* Bootstrap dark grey text */
+    --button-color: #454d55; /* Bootstrap light grey */
+    --error-color: #dc3545; /* Bootstrap danger red */
+    --error-bg-color: #f8d7da; /* Bootstrap danger light background */
+}
+
+body {
+    /* Use a modern, widely available font stack */
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+    line-height: 1.6; /* Improve readability */
+    margin: 0; /* Remove default body margin */
+    padding: 20px; /* Add padding around content */
+    background-color: var(--background-color); /* Fallback background color */
+    color: var(--text-color); /* Default text color */
+    min-height: 100vh; /* Ensure body takes at least the full viewport height */
+    box-sizing: border-box; /* Include padding in the element's total dimensions */
+
+    /* --- Background Image Properties --- */
+    /* Path relative to the CSS file location (static/land_use_app/css/) */
+    background-image: url('../images/bg4.png');
+    background-size: cover; /* Scale the image to cover the entire background area */
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Do not repeat the image */
+    background-attachment: fixed; /* Make the background fixed while content scrolls */
+    /* --- End Background Image Properties --- */
+}
+
+.container { /* Optional: Add a max-width container to center content on larger screens */
+    max-width: 960px; /* Maximum width of the content area */
+    margin: 0 auto; /* Center the block element horizontally */
+    padding: 0 15px; /* Add horizontal padding inside the container */
+}
+
+h1, h2, h3 {
+    color: var(--text-color); /* Color for headers */
+    border-bottom: 1px solid var(--border-color); /* Separator line below headers */
+    padding-bottom: 8px; /* Space between header text and the border */
+    margin-bottom: 20px; /* Space below headers */
+    margin-top: 30px; /* Space above headers */
+}
+
+h1:first-child { /* Specific style for the very first H1 on the page */
+     margin-top: 0;
+}
+
+form {
+    margin-bottom: 40px; /* Space below the form */
+    padding: 30px; /* Padding inside the form container */
+    border: 1px solid var(--border-color); /* Border around the form */
+    background-color: var(--surface-color); /* Background color for the form */
+    border-radius: 8px; /* Rounded corners for the form */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Default subtle shadow */
+    transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+form:hover { /* Style when hovering over the form */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Larger, more pronounced shadow on hover */
+    transform: translateY(-5px); */
+}
+
+ form p { /* Style for form fields rendered within <p> tags by form.as_p */
+     margin-bottom: 20px; /* Space between form fields */
+ }
+
+ /* Style for labels rendered by form.as_p */
+ form p label {
+     display: block; /* Make label a block element so input goes below */
+     margin-bottom: 8px; /* Space between label and input */
+     font-weight: bold; /* Bold text for labels */
+     color: #555; /* Slightly lighter color for labels */
+ }
+
+ input[type="file"] {
+     display: block; /* Ensure file input takes up its own line */
+     margin-bottom: 15px; /* Space below the file input */
+     padding: 8px; /* Padding inside the file input */
+     border: 1px solid var(--border-color); /* Border around the file input */
+     border-radius: 4px; /* Rounded corners for the input field */
+     background-color: var(--background-color); /* Light background for the input */
+     width: calc(100% - 18px); /* Calculate width considering padding and border */
+     box-sizing: border-box; /* Include padding and border in the element's total width */
+ }
+
+.form-actions { /* Wrapper for buttons at the bottom of the form */
+    margin-top: 30px; /* Space above the button section */
+    padding-top: 20px; /* Padding above the buttons */
+    border-top: 1px solid var(--border-color); /* Separator line above buttons */
+}
+
+button {
+    padding: 12px 20px; /* Padding inside the buttons */
+    background-color: var(--button-color); /* Button background color */
+    color: white; /* Button text color */
+    border: none; /* Remove default border */
+    border-radius: 5px; /* Rounded corners for buttons */
+    cursor: pointer; /* Indicate clickable element */
+    font-size: 1em; /* Font size */
+    margin-right: 15px; /* Space between buttons */
+    transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth transition for background and shadow */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle button shadow */
+    /* Add cursor change when disabled */
+    &:disabled {
+        opacity: 0.6; /* Make it slightly transparent */
+        cursor: not-allowed; /* Change cursor */
+        /* Optional: Add a pulsing background animation */
+        /* background-color: var(--primary-color-dark); */
+        /* animation: pulse 1.5s infinite ease-in-out; */
+    }
+}
+
+button:hover { /* Style when hovering over buttons */
+    background-color: var(--text-color); /* Darker background on hover */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15); /* Slightly larger shadow on hover */
+}
+button:active { /* Style when button is clicked */
+     background-color: #343a40; /* Even darker background when active */
+     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2); /* Inset shadow for pressed effect */
+}
+
+button:last-child { /* Remove margin from the last button */
+    margin-right: 0;
+}
+
+.error-message {
+    color: var(--error-color); /* Text color for errors */
+    background-color: var(--error-bg-color); /* Background color for errors */
+    border: 1px solid var(--error-color); /* Border color for errors */
+    font-weight: bold; /* Bold text */
+    margin-bottom: 25px; /* Space below the error message */
+    padding: 15px; /* Padding inside the error box */
+    border-radius: 5px; /* Rounded corners */
+}
+
+.results {
+    margin-top: 30px; /* Space above the results section */
+    padding: 30px; /* Padding inside the results container */
+    border: 1px solid var(--border-color); /* Border around results */
+    background-color: var(--surface-color); /* Background color for results */
+    border-radius: 8px; /* Rounded corners for results */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Default subtle shadow */
+    transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.results:hover { /* Style when hovering over the results section */
+     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Larger, more pronounced shadow on hover */
+     /* Optional: Add a slight upward movement on hover */
+     transform: translateY(-5px); 
+}
+
+
+.results p { /* Style for paragraphs within the results section */
+    margin-bottom: 15px; /* Space below paragraphs */
+}
+
+/* Styles for the legend items */
+.legend-color {
+    display: inline-block; /* Make the span an inline block */
+    width: 20px; /* Width of the color swatch */
+    height: 20px; /* Height of the color swatch */
+    margin-right: 10px; /* Space between swatch and text */
+    border: 1px solid #666; /* Border around the swatch */
+    vertical-align: middle; /* Align the swatch vertically with the text */
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.2); /* Subtle shadow for the swatch */
+    border-radius: 3px; /* Slightly rounded corners for the swatch */
+}
+
+.legend-color.no-change { /* Specific style for the 'no change' swatch */
+     border: 1px dashed #999; /* Dashed border */
+     background-color: transparent; /* Transparent background */
+     box-shadow: none; /* No shadow */
+}
+
+.legend ul { /* Style for the legend list container */
+    padding: 0; /* Remove default left padding */
+    margin-top: 15px; /* Space above the legend list */
+}
+
+.legend li { /* Style for individual legend list items */
+    margin-bottom: 8px; /* Space between legend items */
+}
+
+img {
+    max-width: 100%; /* Ensure image does not exceed its container width */
+    height: auto; /* Maintain aspect ratio */
+    display: block; /* Make image a block element */
+    margin-top: 20px; /* Space above the image */
+    border: 1px solid var(--border-color); /* Border around the image */
+    padding: 5px; /* Padding between border and image content */
+    background-color: var(--background-color); /* Background color behind the image */
+    border-radius: 5px; /* Rounded corners for the image container */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle image shadow */
+}
+
+footer { /* Simple footer styling */
+     margin-top: 40px; /* Space above the footer */
+     text-align: center; /* Center text */
+     font-size: 0.9em; /* Smaller font size */
+     color: #fff; /* Lighter text color */
+}

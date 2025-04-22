@@ -1,5 +1,7 @@
 # LAND-USE CHANGE ANALYSIS APP
 
+![User interface](sample_input_images/user_interface_for_readme.png)
+
 This Django web application allows users to upload two images of the same geographic area taken at different times and perform different types of analysis to identify and visualize changes.
 
 It provides two analysis options: a basic pixel difference analysis and a more advanced semantic segmentation-based change detection.
@@ -80,7 +82,12 @@ Before running the project, ensure you have the following installed:
     $ cd land_use_project
     $ python3 manage.py runserver
     ```    
-6.  Open your web browser and go to `http://127.0.0.1:8000/` (or the address shown in the console).
+6.  Wait as it loads till it displays a message that looks like this on the console:
+"Django version 5.2, using settings 'land_use_project.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK."
+
+Open your web browser and go to `http://127.0.0.1:8000/` (or the address shown in the console).
 
 ## Usage
 
@@ -104,6 +111,8 @@ Consider using the images in the sample_input_images directory. Upload the files
 
 This method is a simple comparison. It calculates the absolute difference between the pixel values of the two images. Areas where the difference exceeds a predefined threshold are considered "changed". Contours and a red overlay highlight these areas. This method is fast but is sensitive to minor variations like lighting changes, shadows, noise, or slight alignment issues, and doesn't understand the semantic content of the images.
 
+![Change map displayed after basic analysis](sample_input_images/basic_change_map_for_readme.png)
+
 ### Advanced Analysis (Segmentation Change Detection)
 
 This method utilizes a deep learning model (`nvidia/segformer-b3-finetuned-ade-512-512`) to understand the content of the images.
@@ -112,6 +121,8 @@ This method utilizes a deep learning model (`nvidia/segformer-b3-finetuned-ade-5
 3.  **Change Detection:** Changes are detected only where the *simplified* category is different between Image 1 and Image 2.
 4.  **Visualization:** The change map highlights these meaningful changes, coloring them according to the simplified category the area *became* in the second image, using the colors defined in `views.py`.
 This method provides a more accurate representation of land use change but depends on the accuracy of the pre-trained segmentation model on the specific image types and quality of the simplified category mapping used.
+
+![Change map displayed after advanced analysis](sample_input_images/advanced_change_map_for_readme.png)
 
 ## Model Information
 
@@ -159,3 +170,5 @@ The model is configured to load once per process upon application startup via `A
 └── requirements.txt           # List of project dependencies (e.g opencv-python, numpy, Pillow, torch, transformers)
 
 ```
+## Future Improvements
+* Use a more robust model trained on a variety of aerial images for precise detection of several categories of land-use change. 

@@ -201,9 +201,9 @@ img {
     box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle image shadow */
 }
 
- footer { /* Simple footer styling */
+footer { /* Simple footer styling */
      margin-top: 40px; /* Space above the footer */
      text-align: center; /* Center text */
      font-size: 0.9em; /* Smaller font size */
      color: #fff; /* Lighter text color */
- }
+}

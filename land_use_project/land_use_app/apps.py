@@ -27,7 +27,6 @@ class LandUseAppConfig(AppConfig):
             import sys
             # Simple check: if 'runserver' is not in the command line args,
             # or if specific commands that don't need the model are present, skip loading.
-            # This check isn't foolproof but prevents loading during e.g., 'makemigrations'.
             if 'runserver' not in sys.argv:
                  logger.info("Skipping model loading during management command.")
                  return # Skip loading
@@ -39,7 +38,6 @@ class LandUseAppConfig(AppConfig):
 
         try:
             # Load the model and feature extractor
-            # These will be class attributes accessible from views
             LandUseAppConfig.feature_extractor = SegformerFeatureExtractor.from_pretrained("nvidia/segformer-b3-finetuned-ade-512-512")
             # Set model to evaluation mode immediately
             LandUseAppConfig.model = SegformerForSemanticSegmentation.from_pretrained("nvidia/segformer-b3-finetuned-ade-512-512").eval()

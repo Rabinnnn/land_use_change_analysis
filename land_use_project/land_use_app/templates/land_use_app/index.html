@@ -22,7 +22,6 @@
             {{ form.as_p }}
 
             <div class="form-actions">
-                 <!-- <button type="submit" name="reset" value="true">Reset</button>  -->
                  <button type="submit" name="analysis_type" value="basic">Perform Basic Analysis</button>
                  <button type="submit" name="analysis_type" value="advanced">Perform Advanced Analysis</button>
             </div>
@@ -94,7 +93,7 @@
                         <ul>
                             {% for item in segmentation_legend_items %}
                                 <li>
-                                    <span class="legend-color" style="background-color: {{ item.color }};"></span>
+                                    <span class="legend-color" style="background-color: {{ item.color }};"></span> {# ignore the highlighted warning - it's a false positive from the linter#}
                                     {{ item.name }}
                                 </li>
                             {% endfor %}
